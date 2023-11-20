@@ -17,7 +17,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class CustomerControllerWithPostgreSQLTest {
@@ -25,27 +27,41 @@ class CustomerControllerWithPostgreSQLTest {
     @LocalServerPort
     private Integer port;
 
+    private static final String POSTGRESQL_DOCKER_IMAGE_TAG = "postgres:15-alpine";
+    private static final String REDIS_DOCKER_IMAGE_TAG = "redis:7.2.3-alpine";
+    private static final int REDIS_PORT = 6379;
+
+    @Container
     static PostgreSQLContainer<?> postgreSQL = new PostgreSQLContainer<>(
-        "postgres:15-alpine"
+        POSTGRESQL_DOCKER_IMAGE_TAG
     );
+
+    @Container
+    static GenericContainer<?> redis = new GenericContainer<>(
+        REDIS_DOCKER_IMAGE_TAG
+    ).withExposedPorts(REDIS_PORT);
 
     @BeforeAll
     static void beforeAll() {
+        redis.start();
         postgreSQL.start();
     }
 
     @AfterAll
     static void afterAll() {
+        redis.stop();
         postgreSQL.stop();
     }
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
-
         registry.add("spring.datasource.url", postgreSQL::getJdbcUrl);
         registry.add("spring.datasource.username", postgreSQL::getUsername);
         registry.add("spring.datasource.password", postgreSQL::getPassword);
         registry.add("spring.sql.init.schema-locations", () -> "classpath:sql/schema-postgre.sql");
+
+        registry.add("spring.data.redis.host", redis::getHost);
+        registry.add("spring.data.redis.port", () -> redis.getMappedPort(REDIS_PORT));
     }
 
     @Autowired

@@ -13,24 +13,25 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class RedisContainerTest {
-
-    @LocalServerPort
-    private Integer port;
+@Testcontainers
+class RedisContainerTest {
 
     private static final String REDIS_DOCKER_IMAGE_TAG = "redis:7.2.3-alpine";
-
     private static final int REDIS_PORT = 6379;
 
     @Autowired
     private RedissonClient redissonClient;
 
+    @Container
     static PostgreSQLContainer<?> postgreSQL = new PostgreSQLContainer<>(
         "postgres:15-alpine"
     );
 
+    @Container
     static GenericContainer<?> redis = new GenericContainer<>(
         REDIS_DOCKER_IMAGE_TAG
     ).withExposedPorts(REDIS_PORT);
