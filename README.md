@@ -8,6 +8,7 @@ dependencies {
     testImplementation 'org.testcontainers:junit-jupiter'
     testImplementation 'org.testcontainers:mysql'
     testImplementation 'org.testcontainers:postgresql'
+    testImplementation 'org.testcontainers:kafka'
     testImplementation 'com.redis.testcontainers:testcontainers-redis'
 }
 ```
@@ -64,6 +65,37 @@ class RedisContainerTest {
     static void configureProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.data.redis.host", redis::getHost);
         registry.add("spring.data.redis.port", () -> redis.getMappedPort(REDIS_PORT));
+    }
+}
+```
+
+# Test code using Test Container for Kafka
+```java
+class KafkaTestContainer {
+    private final static String TEST_CONTAINER_IMAGE_TAG = "confluentinc/cp-kafka:6.2.1";
+
+    static KafkaContainer kafka = new KafkaContainer(DockerImageName.parse(TEST_CONTAINER_IMAGE_TAG))
+        .withExposedPorts(9092);
+
+    @BeforeAll
+    static void beforeAll() {
+        if (kafka.isRunning()) {
+            return;
+        }
+
+        kafka.start();
+    }
+
+    @AfterAll
+    static void afterAll() {
+        kafka.stop();
+    }
+
+    @DynamicPropertySource
+    static void configureProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.kafka.bootstrap-servers", kafka::getBootstrapServers);
+        registry.add("spring.kafka.producer.key-serializer", StringSerializer.class::getName);
+        registry.add("spring.kafka.producer.value-serializer", LongSerializer.class::getName);
     }
 }
 ```

@@ -24,7 +24,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Testcontainers
-class CustomerControllerWithMySQLTest {
+class MySQLTestContainer {
 
     @LocalServerPort
     private Integer port;
